@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediaHub - Subir Video y Música</title>
+    <title>MediaHub - Galería Permanente</title>
     <style>
         :root {
             --primary: #6366f1;
-            --accent: #22c55e; /* Color verde para el botón de proyectar */
+            --accent: #22c55e;
             --bg: #0f172a;
             --card: #1e293b;
             --text: #f8fafc;
@@ -24,38 +24,27 @@
             padding: 20px;
         }
 
-        .container {
-            width: 100%;
-            max-width: 800px;
-        }
-
+        .container { width: 100%; max-width: 900px; }
         h1 { text-align: center; color: var(--primary); }
+        h2 { border-bottom: 2px solid var(--card); padding-bottom: 10px; margin-top: 40px; }
 
         .upload-section {
             background: var(--card);
-            padding: 30px;
+            padding: 20px;
             border-radius: 15px;
             border: 2px dashed var(--primary);
             text-align: center;
-            margin-bottom: 30px;
-            transition: transform 0.2s;
-        }
-
-        .upload-section:hover {
-            transform: scale(1.01);
-            background: #243147;
+            margin-bottom: 20px;
         }
 
         #fileInput { display: none; }
-
         .btn-upload {
             background: var(--primary);
             color: white;
-            padding: 12px 24px;
+            padding: 10px 20px;
             border-radius: 8px;
             cursor: pointer;
             display: inline-block;
-            margin-top: 15px;
             font-weight: bold;
         }
 
@@ -63,56 +52,40 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
+            margin-bottom: 40px;
         }
 
         .media-item {
             background: var(--card);
             padding: 15px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
 
-        .media-item h3 {
-            font-size: 1rem;
-            margin: 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        video, audio { width: 100%; border-radius: 8px; }
 
-        video, audio {
-            width: 100%;
-            border-radius: 8px;
-            outline: none;
-        }
-
-        /* Estilo del botón de proyectar */
         .btn-project {
             background-color: var(--accent);
             color: white;
             border: none;
-            padding: 10px;
+            padding: 8px;
             border-radius: 6px;
             font-weight: bold;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            transition: opacity 0.2s;
+            gap: 5px;
         }
 
-        .btn-project:hover {
-            opacity: 0.9;
-        }
-
-        .empty-msg {
-            text-align: center;
-            grid-column: 1 / -1;
-            opacity: 0.6;
+        .badge {
+            background: var(--primary);
+            font-size: 0.7em;
+            padding: 2px 8px;
+            border-radius: 10px;
+            vertical-align: middle;
         }
     </style>
 </head>
@@ -121,97 +94,79 @@
 <div class="container">
     <h1>MediaHub</h1>
     
-    <div class="upload-section" id="dropZone">
-        <p>Arrastra tus archivos de video o música aquí</p>
-        <p>o</p>
+    <div class="upload-section">
+        <p>Carga temporal (se borra al cerrar)</p>
         <label for="fileInput" class="btn-upload">Seleccionar Archivos</label>
         <input type="file" id="fileInput" accept="video/*,audio/*" multiple>
     </div>
 
-    <div class="media-gallery" id="gallery">
-        <p class="empty-msg">No hay archivos subidos aún.</p>
+    <h2>Galería Permanente <span class="badge">Desde GitHub</span></h2>
+    <div class="media-gallery" id="permanentGallery">
+        <script>
+            // Escribe aquí los nombres exactos de los archivos que subas a GitHub
+            const archivosFijos = [
+                'video_educacion_fisica.mp4', 
+                'clase_informatica.mp4',
+                'musica_fondo.mp3'
+            ];
+        </script>
+    </div>
+
+    <h2>Cargas Recientes</h2>
+    <div class="media-gallery" id="recentGallery">
+        <p id="emptyMsg" style="opacity:0.5">No has subido nada en esta sesión.</p>
     </div>
 </div>
 
 <script>
     const fileInput = document.getElementById('fileInput');
-    const dropZone = document.getElementById('dropZone');
-    const gallery = document.getElementById('gallery');
+    const recentGallery = document.getElementById('recentGallery');
+    const permanentGallery = document.getElementById('permanentGallery');
 
-    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
-
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.style.borderColor = '#fff';
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.style.borderColor = 'var(--primary)';
-    });
-
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.style.borderColor = 'var(--primary)';
-        handleFiles(e.dataTransfer.files);
-    });
-
-    function handleFiles(files) {
-        if (files.length > 0) {
-            if (document.querySelector('.empty-msg')) {
-                gallery.innerHTML = '';
-            }
-
-            Array.from(files).forEach(file => {
-                const fileURL = URL.createObjectURL(file);
-                createMediaElement(file, fileURL);
+    // Cargar archivos permanentes al iniciar
+    window.onload = () => {
+        if (typeof archivosFijos !== 'undefined') {
+            archivosFijos.forEach(nombre => {
+                createMediaElement(nombre, nombre, permanentGallery, true);
             });
         }
-    }
+    };
 
-    function createMediaElement(file, url) {
+    fileInput.addEventListener('change', (e) => {
+        document.getElementById('emptyMsg').style.display = 'none';
+        Array.from(e.target.files).forEach(file => {
+            const url = URL.createObjectURL(file);
+            createMediaElement(file.name, url, recentGallery, false);
+        });
+    });
+
+    function createMediaElement(name, url, container, isPermanent) {
         const div = document.createElement('div');
         div.className = 'media-item';
-
+        
         const title = document.createElement('h3');
-        title.textContent = file.name;
+        title.style.fontSize = '0.9rem';
+        title.textContent = name;
         div.appendChild(title);
 
-        let mediaElement;
-
-        if (file.type.startsWith('video/')) {
-            mediaElement = document.createElement('video');
-            mediaElement.src = url;
-            mediaElement.controls = true;
-            div.appendChild(mediaElement);
-        } else if (file.type.startsWith('audio/')) {
-            mediaElement = document.createElement('audio');
-            mediaElement.src = url;
-            mediaElement.controls = true;
-            div.appendChild(mediaElement);
-        }
-
-        // Crear botón de proyectar
-        const projectBtn = document.createElement('button');
-        projectBtn.className = 'btn-project';
-        projectBtn.innerHTML = `
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M2 3h20v14H2zM8 21h8M12 17v4"></path>
-            </svg>
-            Proyectar en DataShow
-        `;
-
-        // Acción de proyectar (Pantalla completa)
-        projectBtn.onclick = () => {
-            if (mediaElement.requestFullscreen) {
-                mediaElement.requestFullscreen();
-            } else if (mediaElement.webkitRequestFullscreen) { /* Safari */
-                mediaElement.webkitRequestFullscreen();
-            }
-            mediaElement.play(); // Empieza la reproducción automáticamente
+        const isVideo = name.toLowerCase().endsWith('.mp4') || name.toLowerCase().endsWith('.mov');
+        const media = document.createElement(isVideo ? 'video' : 'audio');
+        media.src = url;
+        media.controls = true;
+        media.preload = "metadata";
+        
+        const btn = document.createElement('button');
+        btn.className = 'btn-project';
+        btn.innerHTML = ' proyectar';
+        btn.onclick = () => {
+            if (media.requestFullscreen) media.requestFullscreen();
+            else if (media.webkitRequestFullscreen) media.webkitRequestFullscreen();
+            media.play();
         };
 
-        div.appendChild(projectBtn);
-        gallery.prepend(div);
+        div.appendChild(media);
+        div.appendChild(btn);
+        container.prepend(div);
     }
 </script>
 
